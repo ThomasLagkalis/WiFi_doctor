@@ -43,7 +43,7 @@ class Parser:
                     "Channel": wlan_radio_layer.channel if wlan_radio_layer and hasattr(wlan_radio_layer, 'channel') else None,
                     "Frequency": radio_layer.channel_freq if radio_layer and hasattr(radio_layer, 'channel_freq') else None,
                     "Signal Strength (dBm)": wlan_radio_layer.signal_dbm if wlan_radio_layer and hasattr(wlan_radio_layer, 'signal_dbm') else None,
-                    "Signal/Noise Ratio": wlan_radio_layer.dbm_antnoise if wlan_radio_layer and hasattr(wlan_radio_layer, 'dbm_antnoise') else None,
+                    "Signal/Noise Ratio": wlan_radio_layer.snr if wlan_radio_layer and hasattr(wlan_radio_layer, 'snr') else None,
                     "Data Rate": wlan_radio_layer.data_rate if wlan_radio_layer and hasattr(wlan_radio_layer, 'data_rate') else None,
                     "TSF Timestamp": wlan_radio_layer.timestamp if wlan_radio_layer and hasattr(wlan_radio_layer, 'timestamp') else None
                 }
