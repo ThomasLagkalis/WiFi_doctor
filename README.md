@@ -1,2 +1,4 @@
-``` WiFi doctor in python 
+#  WiFi doctor in python 
 
+## Implemented so far:
+* Parser 
