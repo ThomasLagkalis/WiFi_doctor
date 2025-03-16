@@ -1,0 +1,57 @@
+import pyshark
+
+class Parser:
+    '''
+    A class that parses a pcap file and extracts relavant WI-FI parameters
+    '''
+    def __init__(self, file_path):
+        self.file_path = file_path
+        self.parsed_data = []
+
+    def parse_pcap(self):
+        """
+        Parses a pcap file and extracts relevant Wi-Fi parameters.
+        i.e.
+            - BSSID
+            - Transmitter MAC
+            - Receiver MAC
+            - Type/Subtype
+            - PHY Type
+            - Channel
+            - Frequency
+            - Signal strength (dBm)
+            - SNR
+            - Data Rate
+            - TSF timestamp
+        """
+        capture = pyshark.FileCapture(self.file_path, display_filter="wlan")
+
+        parsed_data = []
+
+        for packet in capture:
+            try:
+                wlan_layer = packet.wlan
+                wlan_radio_layer = packet.wlan_radio if hasattr(packet, 'wlan_radio') else None
+                radio_layer = packet.radiotap if hasattr(packet, 'radiotap') else None
+
+                data = {
+                    "BSSID": wlan_layer.bssid if hasattr(wlan_layer, 'bssid') else None,
+                    "Transmitter MAC": wlan_layer.ta if hasattr(wlan_layer, 'ta') else None,
+                    "Receiver MAC": wlan_layer.ra if hasattr(wlan_layer, 'ra') else None,
+                    "Type/Subtype": wlan_layer.fc_type_subtype if hasattr(wlan_layer, 'fc_type_subtype') else None,
+                    "PHY Type": wlan_radio_layer.phy if wlan_radio_layer and  hasattr(wlan_radio_layer, 'phy') else None,
+                    "Channel": wlan_radio_layer.channel if wlan_radio_layer and hasattr(wlan_radio_layer, 'channel') else None,
+                    "Frequency": radio_layer.channel_freq if radio_layer and hasattr(radio_layer, 'channel_freq') else None,
+                    "Signal Strength (dBm)": wlan_radio_layer.signal_dbm if wlan_radio_layer and hasattr(wlan_radio_layer, 'signal_dbm') else None,
+                    "Signal/Noise Ratio": wlan_radio_layer.dbm_antnoise if wlan_radio_layer and hasattr(wlan_radio_layer, 'dbm_antnoise') else None,
+                    "Data Rate": wlan_radio_layer.data_rate if wlan_radio_layer and hasattr(wlan_radio_layer, 'data_rate') else None,
+                    "TSF Timestamp": wlan_radio_layer.timestamp if wlan_radio_layer and hasattr(wlan_radio_layer, 'timestamp') else None
+                }
+
+                parsed_data.append(data)
+            except Exception as e:
+                print(f"Error parsing packet: {e}")
+
+        capture.close()
+        return parsed_data
+

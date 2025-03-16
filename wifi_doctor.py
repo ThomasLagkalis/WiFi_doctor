@@ -1,0 +1,11 @@
+from parser import Parser
+
+FILE_PATH = "./home_capture.pcapng"
+
+if __name__ == "__main__":
+    pcap_file = FILE_PATH
+    parser = Parser(pcap_file)
+    results = parser.parse_pcap()
+    for entry in results:
+        print(entry)
+        print()
