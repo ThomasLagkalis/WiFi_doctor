@@ -15,6 +15,6 @@ class Analyzer:
             - Signal strength (dBm)
             - SNR
         """
-		df = pd.DataFrame(data, columns=['BSSID', 'Transmitter MAC', 'PHY Type', 'Channel', 'Frequency', 'Signal Strength (dBm)', 'Signal/Noise Ratio'])
+		df = pd.DataFrame(data, columns=['BSSID', 'Transmitter MAC', 'PHY Type', 'Channel', 'Frequency', 'Signal Strength (dBm)', 'Signal/Noise Ratio']).set_index(['Transmitter MAC'])
 		print(df)
 
