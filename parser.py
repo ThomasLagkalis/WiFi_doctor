@@ -18,6 +18,9 @@ class Parser:
             - Type/Subtype
             - PHY Type
             - MCS Index
+            - Bandwidth
+            - Spatial Streams
+            - Short Gi
             - Channel
             - Frequency
             - Signal strength (dBm)
@@ -29,7 +32,9 @@ class Parser:
 
         parsed_data = []
 
-        for packet in capture:
+        for index, packet in enumerate(capture):
+            if index >205:
+                break
             try:
                 wlan_layer = packet.wlan
                 wlan_radio_layer = packet.wlan_radio if hasattr(packet, 'wlan_radio') else None
