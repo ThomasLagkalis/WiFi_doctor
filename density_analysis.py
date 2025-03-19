@@ -16,12 +16,14 @@ class Analyzer:
             - SNR
         """
         df = pd.DataFrame(data, columns=['BSSID', 'Transmitter MAC', 'PHY Type', 'Channel', 'Frequency', 
-                                         'Signal Strength (dBm)', 'Signal/Noise Ratio']) \
+                                         'Signal Strength (dBm)', 'Signal/Noise Ratio']).apply(pd.to_numeric, errors='ignore') \
             .groupby(by='Transmitter MAC') \
-            .agg({'BSSID': 'size', 'Signal Strength (dBm)': ['min', 'max'], 'Frequency':['min', 'max'], 'Signal/Noise Ratio': ['min', 'max']})
+            .agg({'BSSID': 'size', 'Signal Strength (dBm)': ['min', 'max', 'mean'], 'Frequency':['min', 'max', 'mean'], 'Signal/Noise Ratio': ['min', 'max', 'mean']})
         
         print(df)
-        print()
+        total_ssid = df['BSSID'].sum()
+        df['BSSID'] = df['BSSID']/total_ssid
+        print(df['BSSID'])
         print(df.shape)
         """
         Signal strength Expected Quality
