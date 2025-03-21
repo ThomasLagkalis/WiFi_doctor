@@ -39,7 +39,6 @@ class Parser:
                 wlan_layer = packet.wlan
                 wlan_radio_layer = packet.wlan_radio if hasattr(packet, 'wlan_radio') else None
                 radio_layer = packet.radiotap if hasattr(packet, 'radiotap') else None
-
                 data = {
                     "BSSID": wlan_layer.bssid if hasattr(wlan_layer, 'bssid') else None,
                     "Transmitter MAC": wlan_layer.ta if hasattr(wlan_layer, 'ta') else None,
@@ -57,6 +56,7 @@ class Parser:
                     "Data Rate": wlan_radio_layer.data_rate if wlan_radio_layer and hasattr(wlan_radio_layer, 'data_rate') else None,
                     "TSF Timestamp": wlan_radio_layer.timestamp if wlan_radio_layer and hasattr(wlan_radio_layer, 'timestamp') else None
                 }
+
 
 
                 parsed_data.append(data)
