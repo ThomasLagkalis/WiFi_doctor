@@ -1,7 +1,7 @@
 import pandas as pd
 import math
 
-class Analyzer:
+class DataMonitor:
 
     def __init__(self, data):
         self.data = data
