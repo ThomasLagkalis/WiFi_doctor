@@ -1,4 +1,5 @@
 import pandas as pd
+import math
 
 class Analyzer:
 
@@ -15,16 +16,7 @@ class Analyzer:
             - Signal strength (dBm)
             - SNR
         """
-        #df = pd.DataFrame(data, columns=['BSSID', 'Transmitter MAC', 'PHY Type', 'Channel', 'Frequency', 
-           #                              'Signal Strength (dBm)', 'Signal/Noise Ratio']).apply(pd.to_numeric, errors='ignore') \
-         #   .groupby(by='Transmitter MAC') \
-          #  .agg({'BSSID': 'size', 'Signal Strength (dBm)': ['min', 'max', 'mean'], 'Frequency':['min', 'max', 'mean'], 'Signal/Noise Ratio': ['min', 'max', 'mean']})
         
-        #print(df)
-        #total_ssid = df['BSSID'].sum()
-        #df['BSSID'] = df['BSSID']/total_ssid
-        #print(df['BSSID'])
-        #print(df.shape)
         """
         Signal strength Expected Quality
         -90dBm  Chances of connecting are very low at this level
@@ -46,7 +38,7 @@ class Analyzer:
         40 +    Excellent  4K streaming, online gaming, large file transfers
 
         """
-        #print('hey')
+
 
     def get_density_data(self):
         """
@@ -58,12 +50,20 @@ class Analyzer:
         - The total packets transmitted per frequency band (2.4 GHz or 5 GHz)
         - The RSSID (Received Signal Strength Inverse Density) for the entire dataset
         - The total number of SSIDs
+        - The mean RSSI per BSSID
         """
-        df = pd.DataFrame(self.data, columns=['SSID', 'BSSID', 'Transmitter MAC', 'PHY Type', 'Channel', 'Frequency', 'Signal Strength (dBm)'])
+        df = pd.DataFrame(self.data, columns=['SSID', 'BSSID', 'Transmitter MAC', 'PHY Type', 'Channel', 'Frequency', 'Signal Strength (dBm)', 'TSF Timestamp'])
+       
         
-        # Ensure 'Frequency' and 'Signal Strength (dBm)' columns are numeric, coercing errors to NaN
+        # Ensure 'TSF Timestamp', 'Frequency' and 'Signal Strength (dBm)' columns are numeric, coercing errors to NaN
+        df['TSF Timestamp'] = pd.to_numeric(df['TSF Timestamp'], errors='coerce')
         df['Frequency'] = pd.to_numeric(df['Frequency'], errors='coerce')
         df['Signal Strength (dBm)'] = pd.to_numeric(df['Signal Strength (dBm)'], errors='coerce')
+         
+        # Calculate the total duration of capture in seconds
+        total_duration = (df['TSF Timestamp'].iloc[-1] - df['TSF Timestamp'].iloc[0])/1000000
+        if (math.isnan(total_duration)):
+            total_duration = 1
         
         # Count unique Transmitter MACs per BSSID
         tx_macs_per_bssid = df.groupby('BSSID')['Transmitter MAC'].nunique()
@@ -71,30 +71,38 @@ class Analyzer:
         # Count total packets transmitted per BSSID
         packets_per_bssid = df.groupby('BSSID').size()
         
+        # Compute mean RSSI per BSSID
+        mean_rssi_per_bssid = df.groupby('BSSID')['Signal Strength (dBm)'].mean()
+        
+        # Assign index numbers to BSSIDs for plotting
+        bssid_index = {bssid: idx for idx, bssid in enumerate(tx_macs_per_bssid.keys())}
+        
+        # Convert BSSID keys to integer index values
+        tx_macs_per_bssid = {int(bssid_index[bssid]): float(count / total_duration) for bssid, count in tx_macs_per_bssid.items()}
+        packets_per_bssid = {int(bssid_index[bssid]): float(count / total_duration) for bssid, count in packets_per_bssid.items()}
+        mean_rssi_per_bssid = {int(bssid_index[bssid]): float(rssi) for bssid, rssi in mean_rssi_per_bssid.items()}
+        
         # Count total packets transmitted per PHY type
-        packets_per_phy = df.groupby('PHY Type').size()
+        packets_per_phy = (df.groupby('PHY Type').size() / total_duration).to_dict()
         
         # Count total packets transmitted per channel
-        packets_per_channel = df.groupby('Channel').size()
+        packets_per_channel = (df.groupby('Channel').size() / total_duration).to_dict()
         
         # Categorize frequency into 2.4 GHz and 5 GHz bands, handling NaN values
         df['Frequency Band'] = df['Frequency'].apply(lambda x: '2.4 GHz' if pd.notna(x) and x < 3000 else ('5 GHz' if pd.notna(x) else 'Unknown'))
-        packets_per_band = df.groupby('Frequency Band').size()
-        
-        # Compute mean RSSI per SSID
-        mean_rssi_per_ssid = df.groupby('SSID')['Signal Strength (dBm)'].mean()
+        packets_per_band = (df.groupby('Frequency Band').size() / total_duration).to_dict()
         
         # Compute overall RSSID using mean RSSI per SSID
-        rssid = (1 / mean_rssi_per_ssid.abs()).sum() if not mean_rssi_per_ssid.isnull().all() else None
+        rssid = 0
+        for m in mean_rssi_per_bssid.values():
+            rssid += 1/abs(m)
         
-        # Compute total number of SSIDs
-        total_ssids = df['SSID'].nunique()
         return {
-            'tx_per_bssid': tx_macs_per_bssid.to_dict(),
-            'packets_per_bssid': packets_per_bssid.to_dict(),
-            'packets_per_phy': packets_per_phy.to_dict(),
-            'packets_per_channel': packets_per_channel.to_dict(),
-            'packets_per_band': packets_per_band.to_dict(),
+            'tx_per_bssid': tx_macs_per_bssid,
+            'packets_per_bssid': packets_per_bssid,
+            'packets_per_phy': packets_per_phy,
+            'packets_per_channel': packets_per_channel,
+            'packets_per_band': packets_per_band,
+            'mean_rssi_per_bssid': mean_rssi_per_bssid,
             'rssid': rssid,
-            'total_ssids': total_ssids
         }

@@ -32,9 +32,8 @@ class Parser:
 
         parsed_data = []
 
+
         for index, packet in enumerate(capture):
-            # if index >205:
-            #     break
             try:
                 wlan_layer = packet.wlan
                 wlan_radio_layer = packet.wlan_radio if hasattr(packet, 'wlan_radio') else None
@@ -54,7 +53,7 @@ class Parser:
                     "Signal Strength (dBm)": wlan_radio_layer.signal_dbm if wlan_radio_layer and hasattr(wlan_radio_layer, 'signal_dbm') else None,
                     "Signal/Noise Ratio": wlan_radio_layer.snr if wlan_radio_layer and hasattr(wlan_radio_layer, 'snr') else None,
                     "Data Rate": wlan_radio_layer.data_rate if wlan_radio_layer and hasattr(wlan_radio_layer, 'data_rate') else None,
-                    "TSF Timestamp": wlan_radio_layer.timestamp if wlan_radio_layer and hasattr(wlan_radio_layer, 'timestamp') else None
+                    "TSF Timestamp": float(wlan_radio_layer.timestamp) if wlan_radio_layer and hasattr(wlan_radio_layer, 'timestamp') else None
                 }
 
 
