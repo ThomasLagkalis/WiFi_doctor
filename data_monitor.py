@@ -66,7 +66,7 @@ class DataMonitor:
         df['Data Rate'] = pd.to_numeric(df['Data Rate'], errors='coerce')
         mean_data_rate = df['Data Rate'].mean()
         loss_rate = retries[8]/(retries[8] + retries[0])  
-        throughput = 1
+        throughput = mean_data_rate * (1- loss_rate)
         if (verbose == 1):
             print(df)
             print('Loss Rate: ', loss_rate)
