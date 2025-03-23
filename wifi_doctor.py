@@ -18,5 +18,5 @@ if __name__ == "__main__":
 
     # generate combined plot
     visualizer = Visualizer()
-    visualizer.plot_density_metrics(density_data)
     visualizer.display_density_cli_metrics(density_data)
+    visualizer.plot_density_metrics(density_data)

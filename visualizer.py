@@ -38,6 +38,7 @@ class Visualizer:
             ax.tick_params(axis='x', rotation=45)
         
         plt.tight_layout(rect=[0, 0, 1, 0.96])
+        
         plt.show()
 
     def display_density_cli_metrics(self, density_data):
