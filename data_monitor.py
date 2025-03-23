@@ -39,7 +39,40 @@ class DataMonitor:
 
         """
 
+    def get_performance_data(self, verbose=0):
+        """
+        Calculates the theoretical downlink throughput (Throughput = Data_Rate * (1-Frame_Loss_Rate))
+        and returns the throughput and the following performace data:
 
+        - PHY Type
+        - Bandwidth
+        - Short Gi
+        - Data Rate
+        - MCS Index
+        - Signal Strength (dBm)
+        - Rate Gap (as defined in I.Pefkianakis et al. Characterizing Home Wireless Performance: The Gateway View)
+        
+        verbose : - 0 -> silent mode
+                  - 1 -> print in stdout the calculated throughputw
+        """
+        df = pd.DataFrame(self.data, columns=['Transmitter MAC', 'Receiver MAC', 'PHY Type',  'Signal Strength (dBm)', 'Bandwidth', 'Data Rate', 'Short Gi', 'MCS Index', 'Retry'])
+
+        # Filter packets from AP (2C:F8:9B:DD:06:A0) to device (00:20:A6:FC:B0:36)
+        df = df[(df['Transmitter MAC'] == '2c:f8:9b:dd:06:a0') & (df['Receiver MAC'] == '00:20:a6:fc:b0:36')]
+        
+        # Calculate retry (loss) rate.
+        retries = df.groupby('Retry').size()
+        retries = retries.to_dict()
+        df['Data Rate'] = pd.to_numeric(df['Data Rate'], errors='coerce')
+        mean_data_rate = df['Data Rate'].mean()
+        loss_rate = retries[8]/(retries[8] + retries[0])  
+        throughput = 1
+        if (verbose == 1):
+            print(df)
+            print('Loss Rate: ', loss_rate)
+            print('Mean data rate: ', mean_data_rate)
+            print('Downlink Throughput: ', throughput)
+            
     def get_density_data(self):
         """
         Calculates and returns:

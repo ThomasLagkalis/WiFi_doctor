@@ -27,12 +27,12 @@ class Parser:
             - SNR
             - Data Rate
             - TSF timestamp
+            - Retry flag
         """
         capture = pyshark.FileCapture(self.file_path, display_filter="wlan")
 
         parsed_data = []
-
-
+        
         for index, packet in enumerate(capture):
             try:
                 wlan_layer = packet.wlan
@@ -53,7 +53,8 @@ class Parser:
                     "Signal Strength (dBm)": wlan_radio_layer.signal_dbm if wlan_radio_layer and hasattr(wlan_radio_layer, 'signal_dbm') else None,
                     "Signal/Noise Ratio": wlan_radio_layer.snr if wlan_radio_layer and hasattr(wlan_radio_layer, 'snr') else None,
                     "Data Rate": wlan_radio_layer.data_rate if wlan_radio_layer and hasattr(wlan_radio_layer, 'data_rate') else None,
-                    "TSF Timestamp": float(wlan_radio_layer.timestamp) if wlan_radio_layer and hasattr(wlan_radio_layer, 'timestamp') else None
+                    "TSF Timestamp": float(wlan_radio_layer.timestamp) if wlan_radio_layer and hasattr(wlan_radio_layer, 'timestamp') else None,
+                    "Retry": int(wlan_layer.flags, 16) & 8 if wlan_layer and hasattr(wlan_layer, 'flags') else None
                 }
 
 
