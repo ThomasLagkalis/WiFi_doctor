@@ -38,6 +38,20 @@ class DataMonitor:
         40 +    Excellent  4K streaming, online gaming, large file transfers
 
         """
+    def _Re_mapping(self, RSSI):
+        """
+        Return expected PHY rate in Mbps
+        """
+        if RSSI <= -88: return 6.5
+        elif -87 <= RSSI <= -86: return 13
+        elif -85 <= RSSI <= -83: return 19.5
+        elif -82 <= RSSI <= -81: return 26
+        elif -80 <= RSSI <= -75: return 39
+        elif -74 <= RSSI <= -73: return 52
+        elif -72 <= RSSI <= -71: return 58.5
+        elif -70 <= RSSI: return 65
+        else: return 0 
+
 
     def get_performance_data(self, verbose=0):
         """
@@ -59,6 +73,8 @@ class DataMonitor:
 
         # Filter packets from AP (2C:F8:9B:DD:06:A0) to device (00:20:A6:FC:B0:36)
         df = df[(df['Transmitter MAC'] == '2c:f8:9b:dd:06:a0') & (df['Receiver MAC'] == '00:20:a6:fc:b0:36')]
+
+        df['Signal Strength (dBm)'] = pd.to_numeric(df['Signal Strength (dBm)'], errors='coerce')
         
         # Calculate retry (loss) rate.
         retries = df.groupby('Retry').size()
@@ -67,6 +83,8 @@ class DataMonitor:
         mean_data_rate = df['Data Rate'].mean()
         loss_rate = retries[8]/(retries[8] + retries[0])  
         throughput = mean_data_rate * (1- loss_rate)
+        df['Rate Gap'] = df['Signal Strength (dBm)'].apply(lambda x: self._Re_mapping(x)) - df['Data Rate']
+
         if (verbose == 1):
             print(df)
             print('Loss Rate: ', loss_rate)
