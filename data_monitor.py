@@ -155,7 +155,8 @@ class DataMonitor:
         # Compute overall RSSID using mean RSSI per SSID
         rssid = 0
         for m in mean_rssi_per_bssid.values():
-            rssid += 1/abs(m)
+            if m:
+                rssid += 1/abs(m)
         
         return {
             'tx_per_bssid': tx_macs_per_bssid,
