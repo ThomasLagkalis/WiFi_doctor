@@ -1,6 +1,7 @@
 from parser import Parser
 from data_monitor import DataMonitor
 from visualizer import Visualizer
+from analyzer import Analyzer
 
 #FILE_PATH = "./captures/home_capture.pcapng"
 #FILE_PATH = "./captures/trace 801_11.pcapng"
@@ -15,6 +16,7 @@ if __name__ == "__main__":
     results = parser.parse_pcap()
     monitor = DataMonitor(results)
     visualizer = Visualizer()
+    analyzer = Analyzer()
 
     sel = int(input("1: density analysis\n2: performance analysis\n3: both\n"))
     if (sel == 1):
@@ -26,6 +28,8 @@ if __name__ == "__main__":
         # performance analysis
         performance_data = monitor.get_performance_data(verbose=1)
         visualizer.plot_throughput_stats(performance_data)
+        analyzer.performance_analysis(performance_data)
+        
     elif (sel == 3):
         density_data = monitor.get_density_data()
         # generate combined plot

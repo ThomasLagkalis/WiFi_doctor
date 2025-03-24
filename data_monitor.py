@@ -64,12 +64,13 @@ class DataMonitor:
         - Data Rate
         - MCS Index
         - Signal Strength (dBm)
+        - Spatial Streams
         - Rate Gap (as defined in I.Pefkianakis et al. Characterizing Home Wireless Performance: The Gateway View)
         
         verbose : - 0 -> silent mode
                   - 1 -> print in stdout the calculated throughputw
         """
-        df = pd.DataFrame(self.data, columns=['Transmitter MAC', 'Receiver MAC', 'PHY Type',  'Signal Strength (dBm)', 'Bandwidth', 'Data Rate', 'Short Gi', 'MCS Index', 'Retry'])
+        df = pd.DataFrame(self.data, columns=['Transmitter MAC', 'Receiver MAC', 'PHY Type',  'Signal Strength (dBm)', 'Bandwidth', 'Data Rate', 'Short Gi', 'MCS Index', 'Spatial Streams', 'Retry'])
        
 
         # Filter packets from AP (2C:F8:9B:DD:06:A0) to device (00:20:A6:FC:B0:36)
