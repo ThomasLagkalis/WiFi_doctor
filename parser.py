@@ -34,6 +34,8 @@ class Parser:
         parsed_data = []
         
         for index, packet in enumerate(capture):
+           # if index > 500:
+           #     break
             try:
                 wlan_layer = packet.wlan
                 wlan_radio_layer = packet.wlan_radio if hasattr(packet, 'wlan_radio') else None

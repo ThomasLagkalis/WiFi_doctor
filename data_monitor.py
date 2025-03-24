@@ -70,6 +70,7 @@ class DataMonitor:
                   - 1 -> print in stdout the calculated throughputw
         """
         df = pd.DataFrame(self.data, columns=['Transmitter MAC', 'Receiver MAC', 'PHY Type',  'Signal Strength (dBm)', 'Bandwidth', 'Data Rate', 'Short Gi', 'MCS Index', 'Retry'])
+       
 
         # Filter packets from AP (2C:F8:9B:DD:06:A0) to device (00:20:A6:FC:B0:36)
         df = df[(df['Transmitter MAC'] == '2c:f8:9b:dd:06:a0') & (df['Receiver MAC'] == '00:20:a6:fc:b0:36')]
@@ -82,15 +83,23 @@ class DataMonitor:
         df['Data Rate'] = pd.to_numeric(df['Data Rate'], errors='coerce')
         mean_data_rate = df['Data Rate'].mean()
         loss_rate = retries[8]/(retries[8] + retries[0])  
-        throughput = mean_data_rate * (1- loss_rate)
+        mean_throughput = mean_data_rate * (1- loss_rate)
         df['Rate Gap'] = df['Signal Strength (dBm)'].apply(lambda x: self._Re_mapping(x)) - df['Data Rate']
+
+        # Make the time series of throughput
+        df['Throughput'] = df['Data Rate'] * (1 - loss_rate)
 
         if (verbose == 1):
             print(df)
             print('Loss Rate: ', loss_rate)
             print('Mean data rate: ', mean_data_rate)
-            print('Downlink Throughput: ', throughput)
-            
+            print('Downlink Mean Throughput: ', mean_throughput)
+
+        return {
+            'mean throughput': mean_throughput,
+            'data frame': df
+            }
+
     def get_density_data(self):
         """
         Calculates and returns:

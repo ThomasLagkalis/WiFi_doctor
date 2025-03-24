@@ -14,17 +14,18 @@ if __name__ == "__main__":
     parser = Parser(pcap_file)
     results = parser.parse_pcap()
     monitor = DataMonitor(results)
+    visualizer = Visualizer()
 
     sel = int(input("1: density analysis\n2: performance analysis\n3: both\n"))
     if (sel == 1):
         density_data = monitor.get_density_data()
         # generate combined plot
-        visualizer = Visualizer()
         visualizer.plot_density_metrics(density_data)
         visualizer.display_density_cli_metrics(density_data)
     elif (sel == 2):
         # performance analysis
         performance_data = monitor.get_performance_data(verbose=1)
+        visualizer.plot_throughput_stats(performance_data)
     elif (sel == 3):
         density_data = monitor.get_density_data()
         # generate combined plot
@@ -34,6 +35,7 @@ if __name__ == "__main__":
         
         # generate performacne analysis
         performance_data = monitor.get_performance_data(verbose=1)
+        visualizer.plot_throughput_stats(performance_data)
     else:
         print("Wrong input")
 
