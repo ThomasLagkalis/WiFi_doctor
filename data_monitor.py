@@ -64,7 +64,8 @@ class DataMonitor:
 
         use_table = table_80211ac.get(mcs_index) if phy_type == 8 else table_80211n.get(mcs_index) if mcs_index < 8 else table_80211n.get(mcs_index % 8)
 
-        data_rate = use_table.get(bw)[short_gi] * (int(spatial_streams) +1)
+        sp_streams = (int(spatial_streams) +1) if phy_type == 8 else (mcs_index // 8) + 1
+        data_rate = use_table.get(bw)[short_gi] * sp_streams
         return data_rate
 
 
