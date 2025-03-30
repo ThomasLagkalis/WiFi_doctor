@@ -35,7 +35,7 @@ class Parser:
         if density:
             capture = pyshark.FileCapture(self.file_path, display_filter=display)
         else: 
-            capture = pyshark.FileCapture(self.file_path, display_filter="wlan")
+            capture = pyshark.FileCapture(self.file_path, display_filter="wlan.fc.type == 2")
         parsed_data = []
         
         for index, packet in enumerate(capture):
