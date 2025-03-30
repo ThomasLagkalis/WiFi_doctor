@@ -8,7 +8,7 @@ class Parser:
         self.file_path = file_path
         self.parsed_data = []
 
-    def parse_pcap(self):
+    def parse_pcap(self, density=True):
         """
         Parses a pcap file and extracts relevant Wi-Fi parameters.
         i.e.
@@ -30,13 +30,17 @@ class Parser:
             - Retry flag
         """
         display = "wlan.fc.type_subtype == 8"
-        #dispaly = 'wlan'
-        capture = pyshark.FileCapture(self.file_path, display_filter=display)
+    
+        # If it's for density analysis we need only the beacon frames.
+        if density:
+            capture = pyshark.FileCapture(self.file_path, display_filter=display)
+        else: 
+            capture = pyshark.FileCapture(self.file_path, display_filter="wlan")
         parsed_data = []
         
         for index, packet in enumerate(capture):
-        #     if index > 500:
-        #        break
+            #if index > 500:
+            #    break
             try:
                 wlan_layer = packet.wlan
                 wlan_radio_layer = packet.wlan_radio if hasattr(packet, 'wlan_radio') else None

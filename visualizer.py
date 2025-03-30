@@ -2,6 +2,7 @@ import matplotlib
 matplotlib.use('Qt5Agg')
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 
 class Visualizer:
 
@@ -102,6 +103,45 @@ class Visualizer:
         plt.grid(True)
         plt.show()
 
+
+    def plot_dataframe_entries(self, df):
+        """
+        Plots each column in the data frame against its index in separate figures.
+        """
+        for column in df.columns:
+            if column == 'Transmitter MAC' or column == 'Receiver MAC':
+                continue
+            values = df[column].replace({None: np.nan})  # Replace None with NaN
+            values = pd.to_numeric(values, errors='coerce')  # Convert non-numeric values to NaN
+
+            plt.figure(figsize=(10, 4))
+            plt.scatter(values.index, values, marker='o', color='b', label=column)
+            plt.title(column)
+            plt.xlabel("Index")
+            plt.ylabel("Value")
+            plt.legend()
+            plt.tight_layout()
+            plt.show()
+
+    def plot_rolling_average(self, df, window=300):
+        """
+        Plots rolling average for each column in the data frame against its index in separate figures.
+        """
+        for column in df.columns:
+            if column == 'Transmitter MAC' or column == 'Receiver MAC':
+                continue
+            values = df[column].replace({None: np.nan})  # Replace None with NaN
+            values = pd.to_numeric(values, errors='coerce')  # Convert non-numeric values to NaN
+            rolling_avg = values.rolling(window=window, min_periods=1).mean()
+
+            plt.figure(figsize=(10, 4))
+            plt.plot(rolling_avg.index, rolling_avg, marker='o', linestyle='-', color='r', label=f"{column} (Rolling Avg)")
+            plt.title(f"{column} - Rolling Average (Window={window})")
+            plt.xlabel("Index")
+            plt.ylabel("Value")
+            plt.legend()
+            plt.tight_layout()
+            plt.show()
 
 
     def display_density_cli_metrics(self, density_data):

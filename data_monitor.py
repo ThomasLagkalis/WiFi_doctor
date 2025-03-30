@@ -100,7 +100,9 @@ class DataMonitor:
         retries = retries.to_dict()
         df['Data Rate'] = pd.to_numeric(df['Data Rate'], errors='coerce')
         mean_data_rate = df['Data Rate'].mean()
-        loss_rate = retries[8]/(retries[8] + retries[0])  
+        loss_rate = 0
+        if bool(retries):
+            loss_rate = retries[8]/(retries[8] + retries[0])  
         mean_throughput = mean_data_rate * (1- loss_rate)
         #df['Rate Gap'] = df['Signal Strength (dBm)'].apply(lambda x: self._Re_mapping(x)) - df['Data Rate']
         df['Re'] = df.apply(lambda x: self._Re_mapping(x['MCS Index'], x['PHY Type'], x['Bandwidth'], x['Spatial Streams'], x['Short Gi']), axis=1)
