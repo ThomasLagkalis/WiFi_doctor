@@ -143,10 +143,10 @@ class DataMonitor:
         df['Signal Strength (dBm)'] = pd.to_numeric(df['Signal Strength (dBm)'], errors='coerce')
          
         # Calculate the total duration of capture in seconds
-        total_duration = 1#(df['TSF Timestamp'].iloc[-1] - df['TSF Timestamp'].iloc[0])/1000000
+        total_duration = abs(df['TSF Timestamp'].iloc[-1] - df['TSF Timestamp'].iloc[0])/1000000
         if (math.isnan(total_duration)):
             total_duration = 1
-        
+
         # Count unique Transmitter MACs per BSSID
         tx_macs_per_bssid = df.groupby('BSSID')['Transmitter MAC'].nunique()
         
