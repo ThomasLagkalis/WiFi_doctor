@@ -88,9 +88,9 @@ class DataMonitor:
         """
         df = pd.DataFrame(self.data, columns=['Transmitter MAC', 'Receiver MAC', 'PHY Type',  'Signal Strength (dBm)', 'Bandwidth', 'Data Rate', 'Short Gi', 'MCS Index', 'Spatial Streams', 'Retry'])
        
-        df = df[(df['Transmitter MAC'] == '04:71:53:b7:e6:db') & (df['Receiver MAC'] == 'be:c9:46:14:35:b1')]
+        #df = df[(df['Transmitter MAC'] == '04:71:53:b7:e6:db') & (df['Receiver MAC'] == 'be:c9:46:14:35:b1')]
         # Filter packets from AP (2C:F8:9B:DD:06:A0) to device (00:20:A6:FC:B0:36)
-        #df = df[(df['Transmitter MAC'] == '2c:f8:9b:dd:06:a0') & (df['Receiver MAC'] == '00:20:a6:fc:b0:36')]
+        df = df[(df['Transmitter MAC'] == '2c:f8:9b:dd:06:a0') & (df['Receiver MAC'] == '00:20:a6:fc:b0:36')]
 
         df['Signal Strength (dBm)'] = pd.to_numeric(df['Signal Strength (dBm)'], errors='coerce')
         df['MCS Index'] = pd.to_numeric(df['MCS Index'], errors='coerce')
