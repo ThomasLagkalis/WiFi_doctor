@@ -133,6 +133,8 @@ class Visualizer:
             values = df[column].replace({None: np.nan})  # Replace None with NaN
             values = pd.to_numeric(values, errors='coerce')  # Convert non-numeric values to NaN
             rolling_avg = values.rolling(window=window, min_periods=1).mean()
+            if column == 'Short Gi':
+                rolling_avg = (rolling_avg >= 0.5).astype(int)
 
             plt.figure(figsize=(10, 4))
             plt.plot(rolling_avg.index, rolling_avg, marker='o', linestyle='-', color='r', label=f"{column} (Rolling Avg)")
