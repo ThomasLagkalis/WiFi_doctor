@@ -8,7 +8,7 @@ class Parser:
         self.file_path = file_path
         self.parsed_data = []
 
-    def parse_pcap(self):
+    def parse_pcap(self, density=True):
         """
         Parses a pcap file and extracts relevant Wi-Fi parameters.
         i.e.
@@ -29,11 +29,18 @@ class Parser:
             - TSF timestamp
             - Retry flag
         """
-        capture = pyshark.FileCapture(self.file_path, display_filter="wlan")
-
+        display = "wlan.fc.type_subtype == 8"
+    
+        # If it's for density analysis we need only the beacon frames.
+        if density:
+            capture = pyshark.FileCapture(self.file_path, display_filter=display)
+        else: 
+            capture = pyshark.FileCapture(self.file_path, display_filter="wlan.fc.type == 2")
         parsed_data = []
         
         for index, packet in enumerate(capture):
+            #if index > 500:
+            #    break
             try:
                 wlan_layer = packet.wlan
                 wlan_radio_layer = packet.wlan_radio if hasattr(packet, 'wlan_radio') else None
@@ -44,10 +51,10 @@ class Parser:
                     "Receiver MAC": wlan_layer.ra if hasattr(wlan_layer, 'ra') else None,
                     "Type/Subtype": wlan_layer.fc_type_subtype if hasattr(wlan_layer, 'fc_type_subtype') else None,
                     "PHY Type": wlan_radio_layer.phy if wlan_radio_layer and  hasattr(wlan_radio_layer, 'phy') else None,
-                    "MCS Index": radio_layer.mcs_index if wlan_radio_layer and  hasattr(radio_layer, 'mcs_index') else None,
-                    "Bandwidth": radio_layer.mcs_bw if wlan_radio_layer and  hasattr(radio_layer, 'mcs_bw') else None,
+                    "MCS Index": radio_layer.mcs_index if radio_layer and  hasattr(radio_layer, 'mcs_index') else None,
+                    "Bandwidth": radio_layer.mcs_bw if radio_layer and  hasattr(radio_layer, 'mcs_bw') else None,
                     "Spatial Streams": radio_layer.mcs_stbc if wlan_radio_layer and  hasattr(radio_layer, 'mcs_stbc') else None,
-                    "Short Gi": radio_layer.mcs_sgi if wlan_radio_layer and  hasattr(radio_layer, 'mcs_sgi') else None,
+                    "Short Gi": (int(radio_layer.flags, 16) & 128) == 128 if radio_layer and  hasattr(radio_layer, 'flags') else None,
                     "Channel": wlan_radio_layer.channel if wlan_radio_layer and hasattr(wlan_radio_layer, 'channel') else None,
                     "Frequency": radio_layer.channel_freq if radio_layer and hasattr(radio_layer, 'channel_freq') else None,
                     "Signal Strength (dBm)": wlan_radio_layer.signal_dbm if wlan_radio_layer and hasattr(wlan_radio_layer, 'signal_dbm') else None,

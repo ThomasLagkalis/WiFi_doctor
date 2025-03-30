@@ -38,19 +38,35 @@ class DataMonitor:
         40 +    Excellent  4K streaming, online gaming, large file transfers
 
         """
-    def _Re_mapping(self, RSSI):
+
+    def _Re_mapping(self, mcs_index, phy_type, bandwidth, spatial_streams, short_gi):
         """
         Return expected PHY rate in Mbps
         """
-        if RSSI <= -88: return 6.5
-        elif -87 <= RSSI <= -86: return 13
-        elif -85 <= RSSI <= -83: return 19.5
-        elif -82 <= RSSI <= -81: return 26
-        elif -80 <= RSSI <= -75: return 39
-        elif -74 <= RSSI <= -73: return 52
-        elif -72 <= RSSI <= -71: return 58.5
-        elif -70 <= RSSI: return 65
-        else: return 0 
+        if math.isnan(mcs_index): return None
+        bw = 20 * 2**int(bandwidth)
+        #dictionary element = mcs_index: {bandwidth: [data rate/800ns, data rate/400ns]}
+        table_80211n = {
+            0: {20: [6.5, 7.2],   40: [13.5, 14.4], 80: [29.3, 32.5],     160: [58.5, 65]},
+            1: {20: [13, 14.4],   40: [27, 30],     80: [58.5, 65],       160: [117, 130]},
+            2: {20: [19.5, 21.7], 40: [40.5, 45],   80: [87.8, 97.5],     160: [175.5, 195]},
+            3: {20: [26, 28.9],   40: [54, 60],     80: [117, 130],       160: [234, 260]},
+            4: {20: [39, 43.3],   40: [81, 90],     80: [175.5, 195],     160: [351, 390]},
+            5: {20: [52, 57.8],   40: [108, 120],   80: [234, 260],       160: [468, 520]},
+            6: {20: [58.5, 65],   40: [121.5, 135], 80: [263.3, 292.5],   160: [526.5, 585]},
+            7: {20: [65, 72.2],   40: [135, 150],   80: [292.5, 325],     160: [585, 650]},
+        }
+
+        table_80211ac = {
+            8: {20: [78, 86.7],   40: [162, 180],   80: [351, 390],       160: [702, 780]},
+            9: {40: [180, 200],   80: [292.5, 325], 160: [585, 650]}
+        }
+
+        use_table = table_80211ac.get(mcs_index) if phy_type == 8 else table_80211n.get(mcs_index) if mcs_index < 8 else table_80211n.get(mcs_index % 8)
+
+        sp_streams = (int(spatial_streams) +1) if phy_type == 8 else (mcs_index // 8) + 1
+        data_rate = use_table.get(bw)[short_gi] * sp_streams
+        return data_rate
 
 
     def get_performance_data(self, verbose=0):
@@ -64,33 +80,48 @@ class DataMonitor:
         - Data Rate
         - MCS Index
         - Signal Strength (dBm)
+        - Spatial Streams
         - Rate Gap (as defined in I.Pefkianakis et al. Characterizing Home Wireless Performance: The Gateway View)
         
         verbose : - 0 -> silent mode
                   - 1 -> print in stdout the calculated throughputw
         """
-        df = pd.DataFrame(self.data, columns=['Transmitter MAC', 'Receiver MAC', 'PHY Type',  'Signal Strength (dBm)', 'Bandwidth', 'Data Rate', 'Short Gi', 'MCS Index', 'Retry'])
-
+        df = pd.DataFrame(self.data, columns=['Transmitter MAC', 'Receiver MAC', 'PHY Type',  'Signal Strength (dBm)', 'Bandwidth', 'Data Rate', 'Short Gi', 'MCS Index', 'Spatial Streams', 'Retry'])
+       
+        #df = df[(df['Transmitter MAC'] == '04:71:53:b7:e6:db') & (df['Receiver MAC'] == 'be:c9:46:14:35:b1')]
         # Filter packets from AP (2C:F8:9B:DD:06:A0) to device (00:20:A6:FC:B0:36)
         df = df[(df['Transmitter MAC'] == '2c:f8:9b:dd:06:a0') & (df['Receiver MAC'] == '00:20:a6:fc:b0:36')]
 
         df['Signal Strength (dBm)'] = pd.to_numeric(df['Signal Strength (dBm)'], errors='coerce')
+        df['MCS Index'] = pd.to_numeric(df['MCS Index'], errors='coerce')
         
         # Calculate retry (loss) rate.
         retries = df.groupby('Retry').size()
         retries = retries.to_dict()
         df['Data Rate'] = pd.to_numeric(df['Data Rate'], errors='coerce')
         mean_data_rate = df['Data Rate'].mean()
-        loss_rate = retries[8]/(retries[8] + retries[0])  
-        throughput = mean_data_rate * (1- loss_rate)
-        df['Rate Gap'] = df['Signal Strength (dBm)'].apply(lambda x: self._Re_mapping(x)) - df['Data Rate']
+        loss_rate = 0
+        if bool(retries):
+            loss_rate = retries[8]/(retries[8] + retries[0])  
+        mean_throughput = mean_data_rate * (1- loss_rate)
+        #df['Rate Gap'] = df['Signal Strength (dBm)'].apply(lambda x: self._Re_mapping(x)) - df['Data Rate']
+        df['Re'] = df.apply(lambda x: self._Re_mapping(x['MCS Index'], x['PHY Type'], x['Bandwidth'], x['Spatial Streams'], x['Short Gi']), axis=1)
+        df['Rate Gap'] = df['Re'] - df['Data Rate']
+
+        # Make the time series of throughput
+        df['Throughput'] = df['Data Rate'] * (1 - loss_rate)
 
         if (verbose == 1):
             print(df)
             print('Loss Rate: ', loss_rate)
             print('Mean data rate: ', mean_data_rate)
-            print('Downlink Throughput: ', throughput)
-            
+            print('Downlink Mean Throughput: ', mean_throughput)
+
+        return {
+            'mean throughput': mean_throughput,
+            'data frame': df
+            }
+
     def get_density_data(self):
         """
         Calculates and returns:
@@ -112,10 +143,10 @@ class DataMonitor:
         df['Signal Strength (dBm)'] = pd.to_numeric(df['Signal Strength (dBm)'], errors='coerce')
          
         # Calculate the total duration of capture in seconds
-        total_duration = (df['TSF Timestamp'].iloc[-1] - df['TSF Timestamp'].iloc[0])/1000000
+        total_duration = abs(df['TSF Timestamp'].iloc[-1] - df['TSF Timestamp'].iloc[0])/1000000
         if (math.isnan(total_duration)):
             total_duration = 1
-        
+
         # Count unique Transmitter MACs per BSSID
         tx_macs_per_bssid = df.groupby('BSSID')['Transmitter MAC'].nunique()
         
@@ -146,7 +177,8 @@ class DataMonitor:
         # Compute overall RSSID using mean RSSI per SSID
         rssid = 0
         for m in mean_rssi_per_bssid.values():
-            rssid += 1/abs(m)
+            if m:
+                rssid += 1/abs(m)
         
         return {
             'tx_per_bssid': tx_macs_per_bssid,
