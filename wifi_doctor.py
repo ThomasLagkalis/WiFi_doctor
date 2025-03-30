@@ -6,7 +6,8 @@ from analyzer import Analyzer
 #FILE_PATH = "./captures/home_capture.pcapng"
 #FILE_PATH = "./captures/trace 801_11.pcapng"
 #FILE_PATH = './captures/HowIWiFi_PCAP.pcap'
-FILE_PATH = './captures/spiti_mike.pcapng'
+#FILE_PATH = './captures/spiti_mike.pcapng'
+FILE_PATH = './captures/home_capture_adjusted1.pcapng'
 
 
 
